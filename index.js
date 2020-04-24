@@ -10,13 +10,15 @@ import {
 import Svg, { Polygon } from 'react-native-svg';
 
 const AnimatedPolygon = Animated.createAnimatedComponent(Polygon);
+const totalWidth = Dimensions.get('window').width * 0.9;
+const totalLeftMargin = '5%';
 
 class CustomCrop extends Component {
     constructor(props) {
         super(props);
         this.state = {
             viewHeight:
-                Dimensions.get('window').width * (props.height / props.width),
+                totalWidth * (props.height / props.width),
             height: props.height,
             width: props.width,
             image: props.initialImage,
@@ -31,7 +33,7 @@ class CustomCrop extends Component {
                           props.rectangleCoordinates.topLeft,
                           true,
                       )
-                    : { x: 100, y: 100 },
+                    : { x: 50, y: 50 },
             ),
             topRight: new Animated.ValueXY(
                 props.rectangleCoordinates
@@ -39,7 +41,7 @@ class CustomCrop extends Component {
                           props.rectangleCoordinates.topRight,
                           true,
                       )
-                    : { x: Dimensions.get('window').width - 100, y: 100 },
+                    : { x: totalWidth - 50, y: 50 },
             ),
             bottomLeft: new Animated.ValueXY(
                 props.rectangleCoordinates
@@ -47,7 +49,7 @@ class CustomCrop extends Component {
                           props.rectangleCoordinates.bottomLeft,
                           true,
                       )
-                    : { x: 100, y: this.state.viewHeight - 100 },
+                    : { x: 50, y: this.state.viewHeight - 50 },
             ),
             bottomRight: new Animated.ValueXY(
                 props.rectangleCoordinates
@@ -56,8 +58,8 @@ class CustomCrop extends Component {
                           true,
                       )
                     : {
-                          x: Dimensions.get('window').width - 100,
-                          y: this.state.viewHeight - 100,
+                          x: totalWidth - 50,
+                          y: this.state.viewHeight - 50,
                       },
             ),
         };
@@ -87,13 +89,16 @@ class CustomCrop extends Component {
     createPanResponser(corner) {
         return PanResponder.create({
             onStartShouldSetPanResponder: () => true,
-            onPanResponderMove: Animated.event([
-                null,
-                {
-                    dx: corner.x,
-                    dy: corner.y,
-                },
-            ]),
+            onPanResponderMove: (evt, gestureState) => {
+                Animated.event([
+                    null,
+                    {
+                        dx: corner.x,
+                        dy: corner.y,
+                    },
+                ])(evt, gestureState);
+                this.updateOverlayString();
+            },
             onPanResponderRelease: () => {
                 corner.flattenOffset();
                 this.updateOverlayString();
@@ -128,20 +133,26 @@ class CustomCrop extends Component {
     }
 
     updateOverlayString() {
+        let topLeftx = this.state.topLeft.x._value + this.state.topLeft.x._offset;
+        let topLefty = this.state.topLeft.y._value + this.state.topLeft.y._offset;
+
+        let topRightx = this.state.topRight.x._value + this.state.topRight.x._offset;
+        let topRighty = this.state.topRight.y._value + this.state.topRight.y._offset;
+
+        let bottomRightx = this.state.bottomRight.x._value + this.state.bottomRight.x._offset;
+        let bottomRighty = this.state.bottomRight.y._value + this.state.bottomRight.y._offset;
+
+        let bottomLeftx = this.state.bottomLeft.x._value + this.state.bottomLeft.x._offset;
+        let bottomLefty = this.state.bottomLeft.y._value + this.state.bottomLeft.y._offset;
+
         this.setState({
-            overlayPositions: `${this.state.topLeft.x._value},${
-                this.state.topLeft.y._value
-            } ${this.state.topRight.x._value},${this.state.topRight.y._value} ${
-                this.state.bottomRight.x._value
-            },${this.state.bottomRight.y._value} ${
-                this.state.bottomLeft.x._value
-            },${this.state.bottomLeft.y._value}`,
+            overlayPositions: `${topLeftx},${topLefty} ${topRightx},${topRighty} ${bottomRightx},${bottomRighty} ${bottomLeftx},${bottomLefty}`,
         });
     }
 
     imageCoordinatesToViewCoordinates(corner) {
         return {
-            x: (corner.x * Dimensions.get('window').width) / this.state.width,
+            x: (corner.x * totalWidth) / this.state.width,
             y: (corner.y * this.state.viewHeight) / this.state.height,
         };
     }
@@ -149,7 +160,7 @@ class CustomCrop extends Component {
     viewCoordinatesToImageCoordinates(corner) {
         return {
             x:
-                (corner.x._value / Dimensions.get('window').width) *
+                (corner.x._value / totalWidth) *
                 this.state.width,
             y: (corner.y._value / this.state.viewHeight) * this.state.height,
         };
@@ -159,6 +170,7 @@ class CustomCrop extends Component {
         return (
             <View
                 style={{
+                    marginLeft: totalLeftMargin,
                     height: this.state.viewHeight,
                     alignItems: 'center',
                     justifyContent: 'flex-end',
@@ -180,16 +192,16 @@ class CustomCrop extends Component {
                     />
                     <Svg
                         height={this.state.viewHeight}
-                        width={Dimensions.get('window').width}
+                        width={totalWidth}
                         style={{ position: 'absolute', left: 0, top: 0 }}
                     >
                         <AnimatedPolygon
                             ref={(ref) => (this.polygon = ref)}
                             fill={this.props.overlayColor || 'blue'}
-                            fillOpacity={this.props.overlayOpacity || 0.5}
+                            fillOpacity={this.props.overlayOpacity != null ? this.props.overlayOpacity : 0.5}
                             stroke={this.props.overlayStrokeColor || 'blue'}
                             points={this.state.overlayPositions}
-                            strokeWidth={this.props.overlayStrokeWidth || 3}
+                            strokeWidth={this.props.overlayStrokeWidth != null ? this.props.overlayStrokeWidth : 3}
                         />
                     </Svg>
                     <Animated.View
@@ -211,6 +223,7 @@ class CustomCrop extends Component {
                                 { left: 31, top: 31 },
                             ]}
                         />
+                        <View style={{ position: 'absolute', backgroundColor: 'transparent', width: 200, height: 200, right: 29 + 31, bottom: 29 + 31 }} />
                     </Animated.View>
                     <Animated.View
                         {...this.panResponderTopRight.panHandlers}
@@ -231,6 +244,7 @@ class CustomCrop extends Component {
                                 { right: 31, top: 31 },
                             ]}
                         />
+                        <View style={{ position: 'absolute', backgroundColor: 'transparent', width: 200, height: 200, left: 29 + 31, bottom: 29 + 31 }} />
                     </Animated.View>
                     <Animated.View
                         {...this.panResponderBottomLeft.panHandlers}
@@ -251,6 +265,7 @@ class CustomCrop extends Component {
                                 { left: 31, bottom: 31 },
                             ]}
                         />
+                        <View style={{ position: 'absolute', backgroundColor: 'transparent', width: 200, height: 200, right: 29 + 31, top: 29 + 31 }} />
                     </Animated.View>
                     <Animated.View
                         {...this.panResponderBottomRight.panHandlers}
@@ -271,6 +286,7 @@ class CustomCrop extends Component {
                                 { right: 31, bottom: 31 },
                             ]}
                         />
+                        <View style={{ position: 'absolute', backgroundColor: 'transparent', width: 200, height: 200, left: 29 + 31, top: 29 + 31 }} />
                     </Animated.View>
                 </View>
             </View>
@@ -293,7 +309,7 @@ const s = (props) => ({
         backgroundColor: props.handlerColor || 'blue',
     },
     image: {
-        width: Dimensions.get('window').width,
+        width: totalWidth,
         position: 'absolute',
     },
     bottomButton: {
@@ -317,7 +333,7 @@ const s = (props) => ({
     cropContainer: {
         position: 'absolute',
         left: 0,
-        width: Dimensions.get('window').width,
+        width: totalWidth,
         top: 0,
     },
 });
