@@ -102,10 +102,12 @@ class CustomCrop extends Component {
             onPanResponderRelease: () => {
                 corner.flattenOffset();
                 this.updateOverlayString();
+                this.props.onTouchEnd && this.props.onTouchEnd();
             },
             onPanResponderGrant: () => {
                 corner.setOffset({ x: corner.x._value, y: corner.y._value });
                 corner.setValue({ x: 0, y: 0 });
+                this.props.onTouchStart && this.props.onTouchStart();
             },
         });
     }
