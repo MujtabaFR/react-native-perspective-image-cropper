@@ -112,7 +112,7 @@ class CustomCrop extends Component {
         });
     }
 
-    crop() {
+    crop(verticalScale = 1, constrast = 1, brightness = 0) {
         const coordinates = {
             topLeft: this.viewCoordinatesToImageCoordinates(this.state.topLeft),
             topRight: this.viewCoordinatesToImageCoordinates(
@@ -130,6 +130,9 @@ class CustomCrop extends Component {
         NativeModules.CustomCropManager.crop(
             coordinates,
             this.state.image,
+            verticalScale,
+            constrast,
+            brightness,
             (err, res) => this.props.updateImage(res.image, coordinates),
         );
     }
