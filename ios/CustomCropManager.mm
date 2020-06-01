@@ -5,7 +5,7 @@
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(crop:(NSDictionary *)points imageUri:(NSString *)imageUri callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(crop:(NSDictionary *)points imageUri:(NSString *)imageUri verticalScale:(float)verticalScale contrast:(float)contrast brightness:(float)brightness callback:(RCTResponseSenderBlock)callback)
 {
     NSString *parsedImageUri = [imageUri stringByReplacingOccurrencesOfString:@"file://" withString:@""];
     NSURL *fileURL = [NSURL fileURLWithPath:parsedImageUri];
@@ -31,6 +31,33 @@ RCT_EXPORT_METHOD(crop:(NSDictionary *)points imageUri:(NSString *)imageUri call
     rectangleCoordinates[@"inputBottomRight"] = [CIVector vectorWithCGPoint:newBottomRight];
     
     ciImage = [ciImage imageByApplyingFilter:@"CIPerspectiveCorrection" withInputParameters:rectangleCoordinates];
+    
+    // custom code
+    
+    contrast = contrast * 5;
+    
+    /*
+    CIFilter *colorControlsFilter = [CIFilter filterWithName:@"CIColorControls"];
+    [colorControlsFilter setDefaults];
+    [colorControlsFilter setValue:ciImage forKey:@"inputImage"];
+    [colorControlsFilter setValue:[NSNumber numberWithFloat:1.0] forKey:@"inputSaturation"];
+    [colorControlsFilter setValue:[NSNumber numberWithFloat:(brightness / 100)] forKey:@"inputBrightness"];
+    [colorControlsFilter setValue:[NSNumber numberWithFloat:contrast] forKey:@"inputContrast"];
+    CIImage *outputImage = [colorControlsFilter valueForKey:@"outputImage"];
+    */
+    
+    CIFilter *filter = [CIFilter filterWithName:@"CIExposureAdjust"];
+    [filter setValue:ciImage forKey:@"inputImage"];
+    [filter setValue:[NSNumber numberWithFloat:contrast] forKey:@"inputEV"];
+    ciImage = filter.outputImage;
+    
+    CIFilter *filter2 = [CIFilter filterWithName:@"CILanczosScaleTransform"];
+    [filter2 setValue:ciImage forKey:@"inputImage"];
+    [filter2 setValue:@1.0 forKey:@"inputScale"];
+    [filter2 setValue:[NSNumber numberWithFloat:verticalScale] forKey:@"inputAspectRatio"];
+    ciImage = filter2.outputImage;
+    
+    //
     
     CIContext *context = [CIContext contextWithOptions:nil];
     CGImageRef cgimage = [context createCGImage:ciImage fromRect:[ciImage extent]];
