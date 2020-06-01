@@ -58,7 +58,7 @@ public class RNCustomCropModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void crop(ReadableMap points, String imageUri, Callback callback) {
+  public void crop(ReadableMap points, String imageUri, float verticalScale, float contrast, int brightness, Callback callback) {
 
     Point tl = new Point(points.getMap("topLeft").getDouble("x"), points.getMap("topLeft").getDouble("y"));
     Point tr = new Point(points.getMap("topRight").getDouble("x"), points.getMap("topRight").getDouble("y"));
@@ -96,11 +96,18 @@ public class RNCustomCropModule extends ReactContextBaseJavaModule {
 
     Imgproc.warpPerspective(src, doc, m, doc.size());
 
+    doc.convertTo(doc, -1, contrast, brightness); // custom change brightness
+
+    // image.convertTo(new_image, -1, alpha, beta);
+
+
     Bitmap bitmap = Bitmap.createBitmap(doc.cols(), doc.rows(), Bitmap.Config.ARGB_8888);
     Utils.matToBitmap(doc, bitmap);
 
+    Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth(), (int) (bitmap.getHeight() * verticalScale), false); // custom change ratio
+
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    bitmap.compress(Bitmap.CompressFormat.JPEG, 70, byteArrayOutputStream);
+    resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 70, byteArrayOutputStream);
     byte[] byteArray = byteArrayOutputStream.toByteArray();
 
     WritableMap map = Arguments.createMap();
