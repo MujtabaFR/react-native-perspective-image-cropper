@@ -104,7 +104,7 @@ public class RNCustomCropModule extends ReactContextBaseJavaModule {
     Bitmap bitmap = Bitmap.createBitmap(doc.cols(), doc.rows(), Bitmap.Config.ARGB_8888);
     Utils.matToBitmap(doc, bitmap);
 
-    Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth(), (int) (bitmap.getHeight() * verticalScale), false); // custom change ratio
+    Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth(), (int) (bitmap.getHeight() / verticalScale), false); // custom change ratio
 
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 70, byteArrayOutputStream);
